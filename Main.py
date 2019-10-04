@@ -23,7 +23,7 @@ def analyse_frames():
             succeeded, frame = video.read()
             succeeded = True
             while succeeded:
-                video.set(cv2.CAP_PROP_POS_MSEC, (counter*186))
+                video.set(cv2.CAP_PROP_POS_MSEC, (counter*100))
                 succeeded, frame = video.read()
                 img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 img_pil = Image.fromarray(img)
@@ -33,7 +33,7 @@ def analyse_frames():
                 color = color[1:-1]
                 file.write((str(color) + "\n"))
                 counter += 1
-                print("Tenth of Seconds analyzed: {} / {}".format(counter, int(total_seconds / 186)))
+                print("Tenth of Seconds analyzed: {} / {}".format(counter, int(total_seconds / 100)))
     except:
         print("Error occured.")
 
