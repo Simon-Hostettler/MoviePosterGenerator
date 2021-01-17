@@ -1,35 +1,35 @@
 # Script which gets average color of frames from video file, then converts it into different posters
 
 import sys
+import os
 import cv2
+import numpy as np
 import PIL
 from PIL import Image, ImageDraw
 
-VIDEO_PATH = "x"
+VIDEO_PATH = "/home/simon/Videos/eoe.mkv"
 
 # Title of file in which average colors will be written
-MOVIE_TITLE = "x"
+MOVIE_TITLE = "NGE"
 
 
 def analyse_frames(movie_path):
-    # Opens video in cv2, gets frame every 100ms, converts it to PIL Image, then writes average color into file
+    # Opens video in cv2, gets frame every second, calculates average color of frame and writes it into file
     try:
         with open(MOVIE_TITLE, "w") as file:
             counter = 0
             video = cv2.VideoCapture(movie_path)
-            video.set(cv2.CAP_PROP_POS_AVI_RATIO, 1)
-            total_seconds = video.get(cv2.CAP_PROP_POS_MSEC)
-            video.set(cv2.CAP_PROP_POS_AVI_RATIO, 0)
-            succeeded, frame = video.read()
-            while succeeded:
-                video.set(cv2.CAP_PROP_POS_MSEC, (counter*100))
-                succeeded, frame = video.read()
+            total_seconds = int(video.get(
+                cv2.CAP_PROP_FRAME_COUNT)/video.get(cv2.CAP_PROP_FPS))
+            _, frame = video.read()
+            for i in progressbar(range(total_seconds), "Frames analyzed: "):
+                video.set(cv2.CAP_PROP_POS_MSEC, (counter*1000))
+                _, frame = video.read()
                 img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                img_pil = Image.fromarray(img).resize((1, 1))
-                color = str(img_pil.getpixel((0, 0)))[1:-1]
-                file.write((str(color) + "\n"))
+                color = str(img.mean(axis=(0, 1), dtype=int))[
+                    1:-1].strip().replace("   ", " ").replace("  ", " ").replace(" ", ", ")
+                file.write(color + "\n")
                 counter += 1
-                print(f"Frames analyzed: {counter} / {total_seconds / 100}")
     except:
         print("Couldn't read movie file.")
 
@@ -52,7 +52,8 @@ def create_barcode_poster():
 
     img = Image.new('RGB', (width, height), color='white')
     with open(MOVIE_TITLE) as file:
-        color_list = [tuple(map(int, i.split(','))) for i in file]
+        lines = file.readlines()
+        color_list = [tuple(map(int, i.split(','))) for i in lines[:-1]]
     draw = ImageDraw.Draw(img)
     for counter, color in enumerate(color_list):
         left = (0, counter)
@@ -67,7 +68,8 @@ def create_wave_poster():
     # creates png with pixel height equal to the analysed frames, width is 2/3 of height (standard poster format)
     # draws a line each loop whose width depends on relative brightness of frame to create wave effect
     with open(MOVIE_TITLE) as file:
-        color_list = [tuple(map(int, i.split(','))) for i in file]
+        lines = file.readlines()
+        color_list = [tuple(map(int, i.split(','))) for i in lines[:-1]]
 
     height = int(file_len(MOVIE_TITLE) * 1.2)
     width = int(height / (1 + 7/9))
@@ -103,9 +105,10 @@ def create_average_poster():
 
     # sets number of frames to average together
     NUM_COLORS_AVERAGED = 30
-
     with open(MOVIE_TITLE) as file:
-        color_list = [tuple(map(int, i.split(','))) for i in file]
+        lines = file.readlines()
+        color_list = [tuple(map(int, i.split(',')))
+                      for i in lines[:-1]]
 
     height = int(file_len(MOVIE_TITLE) * 1.2)
     width = int(height / (1.5))
@@ -150,6 +153,7 @@ def create_average_poster():
         counter += NUM_COLORS_AVERAGED
     del draw
     img.save(MOVIE_TITLE + "_average.png")
+    print("Succesfully rendered average_poster")
 
 
 def resize_image(file, max_length):
@@ -158,7 +162,26 @@ def resize_image(file, max_length):
     img.save(file)
 
 
-if __name__ == "__main__":
+def progressbar(iterator, pre="", size=60, file=sys.stdout):
+    count = len(iterator)
+    def clear(): return os.system('clear')
 
-    # analyse_frames()
+    def show(j):
+        x = int(size*j/count)
+        file.write("%s[%s%s] %i/%i\r" % (pre, "#"*x, "."*(size-x), j, count))
+        file.flush()
+    show(0)
+    for i, item in enumerate(iterator):
+        yield item
+        clear()
+        show(i+1)
+        file.write("\n")
+        file.flush()
+
+
+if __name__ == "__main__":
+    # if not(os.path.isfile(sys.path[0]+"/"+MOVIE_TITLE)):
+    analyse_frames(VIDEO_PATH)
     create_average_poster()
+    create_wave_poster()
+    create_barcode_poster()
