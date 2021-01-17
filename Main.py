@@ -4,6 +4,7 @@ import sys
 import os
 import cv2
 import numpy as np
+import regex as re
 import PIL
 from PIL import Image, ImageDraw
 
@@ -26,8 +27,8 @@ def analyse_frames(movie_path):
                 video.set(cv2.CAP_PROP_POS_MSEC, (counter*1000))
                 _, frame = video.read()
                 img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                color = str(img.mean(axis=(0, 1), dtype=int))[
-                    1:-1].strip().replace("   ", " ").replace("  ", " ").replace(" ", ", ")
+                color = re.sub("\s+", ",", str(img.mean(axis=(0, 1), dtype=int))[
+                    1:-1].strip())
                 file.write(color + "\n")
                 counter += 1
     except:
