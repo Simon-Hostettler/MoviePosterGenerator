@@ -8,10 +8,10 @@ import regex as re
 import PIL
 from PIL import Image, ImageDraw
 
-VIDEO_PATH = "x"
+VIDEO_PATH = "/home/simon/Videos/YourName.mkv"
 
 # Title of file in which average colors will be written
-MOVIE_TITLE = "x"
+MOVIE_TITLE = "YourName"
 
 
 def analyse_frames(movie_path):
@@ -26,13 +26,15 @@ def analyse_frames(movie_path):
             for i in progressbar(range(total_seconds), "Frames analyzed: "):
                 video.set(cv2.CAP_PROP_POS_MSEC, (counter*1000))
                 _, frame = video.read()
-                img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                color = re.sub("\s+", ",", str(img.mean(axis=(0, 1), dtype=int))[
-                    1:-1].strip())
-                file.write(color + "\n")
+                # this nightmare gets the average framecolor in BGR, replaces whitespaces with commas,
+                # splits the three colors, inverses them to RGB and then joins them again with commas
+                if frame is not None:
+                    color = ",".join(reversed((re.sub("\s+", ",", str(frame.mean(axis=(0, 1), dtype=int))[
+                        1:-1].strip())).split(",")))
+                    file.write(color + "\n")
                 counter += 1
-    except:
-        print("Couldn't read movie file.")
+    except Exception as e:
+        print(e)
 
 
 def file_len(file_name):
