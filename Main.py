@@ -7,10 +7,10 @@ import numpy as np
 import PIL
 from PIL import Image, ImageDraw
 
-VIDEO_PATH = "/home/simon/Videos/eoe.mkv"
+VIDEO_PATH = "x"
 
 # Title of file in which average colors will be written
-MOVIE_TITLE = "NGE"
+MOVIE_TITLE = "x"
 
 
 def analyse_frames(movie_path):
@@ -180,8 +180,8 @@ def progressbar(iterator, pre="", size=60, file=sys.stdout):
 
 
 if __name__ == "__main__":
-    # if not(os.path.isfile(sys.path[0]+"/"+MOVIE_TITLE)):
-    analyse_frames(VIDEO_PATH)
+    if not(os.path.isfile(sys.path[0]+"/"+MOVIE_TITLE)):
+        analyse_frames(VIDEO_PATH)
     create_average_poster()
     create_wave_poster()
     create_barcode_poster()
