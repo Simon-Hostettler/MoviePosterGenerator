@@ -5,6 +5,7 @@ This data can then be processed in the three functions create_line_poster, creat
 Just play around with the variables until you get a result you like, since every color sets needs some different constants.
 
 Examples from the movie the End of Evangelion:
-![barcode](/Examples/barcode.png)
-![wave](/Examples/wave.png)
-![average](/Examples/average.png)
+
+<img src="/Examples/barcode.png" width="50%" height="50%">
+<img src="/Examples/wave.png" width="50%" height="50%">
+<img src="/Examples/average.png" width="50%" height="50%">
