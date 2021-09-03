@@ -7,6 +7,6 @@ The runtime of the analyse_frames() function is in O(file_length*frame_height^2)
 
 Examples from the movie the End of Evangelion:
 
-<img src="/Examples/barcode.png" width="50%" height="50%">
-<img src="/Examples/wave.png" width="50%" height="50%">
 <img src="/Examples/average.png" width="50%" height="50%">
+<img src="/Examples/wave.png" width="50%" height="50%">
+<img src="/Examples/barcode.png" width="50%" height="50%">
