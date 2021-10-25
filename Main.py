@@ -8,10 +8,10 @@ import regex as re
 import PIL
 from PIL import Image, ImageDraw
 
-VIDEO_PATH = "/home/simon/Videos/YourName.mkv"
+VIDEO_PATH = "EoE.mkv"
 
 # Title of file in which average colors will be written
-MOVIE_TITLE = "YourName"
+MOVIE_TITLE = "Eoe"
 
 
 def analyse_frames(movie_path):
@@ -26,7 +26,7 @@ def analyse_frames(movie_path):
             for i in progressbar(range(total_seconds), "Frames analyzed: "):
                 video.set(cv2.CAP_PROP_POS_MSEC, (counter*1000))
                 _, frame = video.read()
-                # this nightmare gets the average framecolor in BGR, replaces whitespaces with commas,
+                # this code gets the average framecolor in BGR, replaces whitespaces with commas,
                 # splits the three colors, inverses them to RGB and then joins them again with commas
                 if frame is not None:
                     color = ",".join(reversed((re.sub("\s+", ",", str(frame.mean(axis=(0, 1), dtype=int))[
@@ -64,12 +64,18 @@ def create_barcode_poster():
         draw.line([left, right], fill=color)
     del draw
     img.save(MOVIE_TITLE + "_barcode.png")
-    print("Succesfully rendered barcode_poster")
+    print("Successfully rendered barcode_poster")
 
 
 def create_wave_poster():
     # creates png with pixel height equal to the analysed frames, width is 2/3 of height (standard poster format)
     # draws a line each loop whose width depends on relative brightness of frame to create wave effect
+
+    # how much the brightness affects the length of a line, exponential
+    BRIGHTNESS_COEFF = 0.3
+    # how much the length between the actual and last line should differ, linear
+    LINE_VARIATION = 40
+
     with open(MOVIE_TITLE) as file:
         lines = file.readlines()
         color_list = [tuple(map(int, i.split(','))) for i in lines[:-1]]
@@ -78,36 +84,45 @@ def create_wave_poster():
     width = int(height / (1 + 7/9))
     mid = int(width / 2)
     min_line_width = int(width / 20)
-    img = Image.new('RGB', (width, height), color='black')
+    img = Image.new('RGB', (width, height), color="black")
 
     counter = int(file_len(MOVIE_TITLE) * 0.1)
     draw = ImageDraw.Draw(img)
     brightness = get_color_brightness(color_list[0])
     # brightness = value between 0&1, by converting color to grayscale
-    last_len = int(min_line_width ** (1 + 0.3 * brightness))
+    last_length = int(min_line_width ** (1 + BRIGHTNESS_COEFF * brightness))
 
     for color in color_list:
         brightness = get_color_brightness(color)
-        actual_len = int(min_line_width ** (1 + 0.3 * brightness))
-        if actual_len > last_len:
-            actual_len = int(((last_len + 3 + 40*brightness) + last_len) / 2)
+        length = int(min_line_width ** (1 + BRIGHTNESS_COEFF * brightness))
+
+        # if line brighter than last, extend it, else shorten it
+        if length > last_length:
+            length = int(
+                ((last_length + 3 + LINE_VARIATION*brightness) + last_length) / 2)
         else:
-            actual_len = int(((last_len - 3 - 40*brightness) + last_len) / 2)
-        last_len = actual_len
-        left = (mid - actual_len, counter)
-        right = (mid + actual_len, counter)
+            length = int(
+                ((last_length - 3 - LINE_VARIATION*brightness) + last_length) / 2)
+
+        last_length = length
+        left = (mid - length, counter)
+        right = (mid + length, counter)
         draw.line([left, right], fill=color)
+
         counter += 1
     del draw
     img.save(MOVIE_TITLE + "_wave.png")
-    print("Succesfully rendered wave_poster")
+    print("Successfully rendered wave_poster")
 
 
 def create_average_poster():
     # averages a number of frame then draws a polygon for each color, length depending on previous and following brightness
 
-    # sets number of frames to average together
-    NUM_COLORS_AVERAGED = 30
+    # sets number of frames to average colors together
+    NUM_FRAMES_GROUPED = 30
+    # how much the brightness affects the length of a line, exponential
+    BRIGHTNESS_COEFF = 0.3
+
     with open(MOVIE_TITLE) as file:
         lines = file.readlines()
         color_list = [tuple(map(int, i.split(',')))
@@ -117,43 +132,45 @@ def create_average_poster():
     width = int(height / (1.5))
     mid = int(width / 2)
     min_line_width = int(width / 20)
-    img = Image.new('RGB', (width, height), color='black')
+    img = Image.new('RGB', (width, height), color=(26, 28, 33, 0))
 
     # Setting up list of averaged colors
-    smaller_color_list = []
+    reduced_colors = []
     count_colors = 0
     tuplecolor = (color_list[0])
     for x in range(1, len(color_list)):
-        if count_colors < NUM_COLORS_AVERAGED:
+        if count_colors < NUM_FRAMES_GROUPED:
             tuplecolor = tuple(map(sum, zip(tuplecolor, color_list[x])))
             count_colors += 1
         else:
-            smaller_color_list.append(
-                tuple(int(ti/NUM_COLORS_AVERAGED) for ti in tuplecolor))
+            reduced_colors.append(
+                tuple(int(ti/NUM_FRAMES_GROUPED) for ti in tuplecolor))
             tuplecolor = tuple(map(sum, zip((0, 0, 0), color_list[x])))
             count_colors = 0
 
     counter = int(file_len(MOVIE_TITLE) * 0.1)
     draw = ImageDraw.Draw(img)
-    brightness = get_color_brightness(smaller_color_list[0])
+    brightness = get_color_brightness(reduced_colors[0])
     # brightness = value between 0&1, by converting color to grayscale
-    last_len = int(min_line_width ** (1 + 0.3 * brightness))
-    next_len = int(
-        int(min_line_width ** (1 + 0.3 * get_color_brightness(smaller_color_list[1]))))
+    last_length = int(min_line_width ** (1 + BRIGHTNESS_COEFF * brightness))
+    next_length = int(min_line_width ** (1 + BRIGHTNESS_COEFF *
+                                         get_color_brightness(reduced_colors[1])))
 
-    for x in range(len(smaller_color_list)-1):
-        brightness = get_color_brightness(smaller_color_list[x])
-        actual_len = int(min_line_width ** (1 + 0.3 * brightness))
-        next_len = int(int(min_line_width ** (1 + 0.3 *
-                                              get_color_brightness(smaller_color_list[x+1]))))
-        last_len = actual_len
-        top_left = (mid - last_len, counter)
-        top_right = (mid + last_len, counter)
-        bot_left = (mid - next_len, counter + NUM_COLORS_AVERAGED)
-        bot_right = (mid + next_len, counter+NUM_COLORS_AVERAGED)
+    for x in range(len(reduced_colors)-1):
+        brightness = get_color_brightness(reduced_colors[x])
+        length = int(min_line_width ** (1 + BRIGHTNESS_COEFF * brightness))
+        next_length = int(min_line_width ** (1 + BRIGHTNESS_COEFF *
+                                             get_color_brightness(reduced_colors[x+1])))
+        last_length = length
+
+        top_left = (mid - last_length, counter)
+        top_right = (mid + last_length, counter)
+        bot_left = (mid - next_length, counter + NUM_FRAMES_GROUPED)
+        bot_right = (mid + next_length, counter + NUM_FRAMES_GROUPED)
         draw.polygon([top_left, top_right, bot_right, bot_left],
-                     fill=smaller_color_list[x])
-        counter += NUM_COLORS_AVERAGED
+                     fill=reduced_colors[x])
+
+        counter += NUM_FRAMES_GROUPED
     del draw
     img.save(MOVIE_TITLE + "_average.png")
     print("Succesfully rendered average_poster")
