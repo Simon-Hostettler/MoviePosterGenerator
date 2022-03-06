@@ -8,23 +8,25 @@ import regex as re
 import PIL
 from PIL import Image, ImageDraw
 
-VIDEO_PATH = "EoE.mkv"
+VIDEO_PATH = "rhapsody.mkv"
 
 # Title of file in which average colors will be written
-MOVIE_TITLE = "Eoe"
+MOVIE_TITLE = "rhapsody"
 
 
 def analyse_frames(movie_path):
-    # Opens video in cv2, gets frame every second, calculates average color of frame and writes it into file
+    # Opens video in cv2, gets one frame per second, calculates average color of frame and writes it into file
     try:
         with open(MOVIE_TITLE, "w") as file:
             counter = 0
             video = cv2.VideoCapture(movie_path)
-            total_seconds = int(video.get(
-                cv2.CAP_PROP_FRAME_COUNT)/video.get(cv2.CAP_PROP_FPS))
-            _, frame = video.read()
-            for i in progressbar(range(total_seconds), "Frames analyzed: "):
-                video.set(cv2.CAP_PROP_POS_MSEC, (counter*1000))
+            total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+            fps = int(video.get(cv2.CAP_PROP_FPS))
+            video.set(cv2.CAP_PROP_POS_MSEC, 0)
+            for i in progressbar(range(int(total_frames/fps)), "Frames analyzed: "):
+                # only want one fps, skip the rest
+                for _ in range(0, fps-1):
+                    video.read()
                 _, frame = video.read()
                 # this code gets the average framecolor in BGR, replaces whitespaces with commas,
                 # splits the three colors, inverses them to RGB and then joins them again with commas
