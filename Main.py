@@ -59,7 +59,7 @@ def create_barcode_poster(file_name):
         right = (width, counter)
         draw.line([left, right], fill=color)
     del draw
-    img.save(file_name + "_barcode.png")
+    img.save("Images/" + file_name.split('/')[1] + "_barcode.png")
     print("Successfully rendered barcode_poster")
 
 
@@ -107,7 +107,7 @@ def create_wave_poster(file_name):
 
         counter += 1
     del draw
-    img.save(file_name + "_wave.png")
+    img.save("Images/" + file_name.split('/')[1] + "_wave.png")
     print("Successfully rendered wave_poster")
 
 
@@ -168,7 +168,7 @@ def create_average_poster(file_name):
 
         counter += NUM_FRAMES_GROUPED
     del draw
-    img.save(file_name + "_average.png")
+    img.save("Images/" + file_name.split('/')[1] + "_average.png")
     print("Succesfully rendered average_poster")
 
 
@@ -196,8 +196,14 @@ def progressbar(iterator, pre="", size=60, file=sys.stdout):
 
 
 if __name__ == "__main__":
+    if not os.path.exists(sys.path[0]+"/Images/"):
+        os.makedirs(sys.path[0]+"/Images/")
+    if not os.path.exists(sys.path[0]+"/ColorFiles/"):
+        os.makedirs(sys.path[0]+"/ColorFiles/")
+
     video_path = askopenfilename()
-    file_name = os.path.basename(video_path).split('.')[0]
+    file_name = "ColorFiles/" + os.path.basename(video_path).split('.')[0]
+
     try:
         if not(os.path.isfile(sys.path[0]+"/"+file_name)):
             analyse_frames(video_path, file_name)
