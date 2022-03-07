@@ -3,40 +3,36 @@
 import sys
 import os
 import cv2
-import numpy as np
 import regex as re
-import PIL
+from tkinter.filedialog import askopenfilename
 from PIL import Image, ImageDraw
 
-VIDEO_PATH = "rhapsody.mkv"
-
-# Title of file in which average colors will be written
-MOVIE_TITLE = "rhapsody"
+MOVIE_TITLE = "placeholder"
 
 
 def analyse_frames(movie_path):
-    # Opens video in cv2, gets one frame per second, calculates average color of frame and writes it into file
-    try:
-        with open(MOVIE_TITLE, "w") as file:
-            counter = 0
-            video = cv2.VideoCapture(movie_path)
-            total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
-            fps = int(video.get(cv2.CAP_PROP_FPS))
-            video.set(cv2.CAP_PROP_POS_MSEC, 0)
-            for i in progressbar(range(int(total_frames/fps)), "Frames analyzed: "):
-                # only want one fps, skip the rest
-                for _ in range(0, fps-1):
-                    video.read()
-                _, frame = video.read()
-                # this code gets the average framecolor in BGR, replaces whitespaces with commas,
-                # splits the three colors, inverses them to RGB and then joins them again with commas
-                if frame is not None:
-                    color = ",".join(reversed((re.sub("\s+", ",", str(frame.mean(axis=(0, 1), dtype=int))[
-                        1:-1].strip())).split(",")))
-                    file.write(color + "\n")
-                counter += 1
-    except Exception as e:
-        print(e)
+    # Opens video in cv2, gets frames each second, calculates average color of frame and writes it into file
+    # how many frames to look at per second
+    FRAME_PER_SEC = 1
+
+    with open(MOVIE_TITLE, "w") as file:
+        video = cv2.VideoCapture(movie_path)
+        total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+        fps = int(video.get(cv2.CAP_PROP_FPS))
+        video.set(cv2.CAP_PROP_POS_MSEC, 0)
+
+        for i in progressbar(range(int(total_frames/(fps/FRAME_PER_SEC))), "Frames analyzed: "):
+            # only want one fps, skip the rest
+            for _ in range(0, int(fps/FRAME_PER_SEC)):
+                video.grab()
+            _, frame = video.retrieve()
+
+            # this code gets the average framecolor in BGR, replaces whitespaces with commas,
+            # splits the three colors, inverses them to RGB and then joins them again with commas
+            if frame is not None:
+                color = ",".join(reversed((re.sub("\s+", ",", str(frame.mean(axis=(0, 1), dtype=int))[
+                    1:-1].strip())).split(",")))
+                file.write(color + "\n")
 
 
 def file_len(file_name):
@@ -202,8 +198,13 @@ def progressbar(iterator, pre="", size=60, file=sys.stdout):
 
 
 if __name__ == "__main__":
-    if not(os.path.isfile(sys.path[0]+"/"+MOVIE_TITLE)):
-        analyse_frames(VIDEO_PATH)
+    video_path = askopenfilename()
+    MOVIE_TITLE = os.path.basename(video_path).split('.')[0]
+    try:
+        if not(os.path.isfile(sys.path[0]+"/"+MOVIE_TITLE)):
+            analyse_frames(video_path)
+    except Exception as e:
+        print(e)
     create_average_poster()
     create_wave_poster()
     create_barcode_poster()
