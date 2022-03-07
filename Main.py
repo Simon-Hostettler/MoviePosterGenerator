@@ -7,15 +7,13 @@ import regex as re
 from tkinter.filedialog import askopenfilename
 from PIL import Image, ImageDraw
 
-MOVIE_TITLE = "placeholder"
 
-
-def analyse_frames(movie_path):
+def analyse_frames(movie_path, file_name):
     # Opens video in cv2, gets frames each second, calculates average color of frame and writes it into file
     # how many frames to look at per second
     FRAME_PER_SEC = 1
 
-    with open(MOVIE_TITLE, "w") as file:
+    with open(file_name, "w") as file:
         video = cv2.VideoCapture(movie_path)
         total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
         fps = int(video.get(cv2.CAP_PROP_FPS))
@@ -45,14 +43,14 @@ def get_color_brightness(c):
     return ((c[0] * 0.2989) + (c[1] * 0.5870) + (c[2] * 0.114))/255
 
 
-def create_barcode_poster():
+def create_barcode_poster(file_name):
     # creates png with pixel height equal to the analysed frames, width is 2/3 of height (standard poster format)
     # draws a horizontal line with color of every frame
-    height = file_len(MOVIE_TITLE)
+    height = file_len(file_name)
     width = int(height / 1.5)
 
     img = Image.new('RGB', (width, height), color='white')
-    with open(MOVIE_TITLE) as file:
+    with open(file_name) as file:
         lines = file.readlines()
         color_list = [tuple(map(int, i.split(','))) for i in lines[:-1]]
     draw = ImageDraw.Draw(img)
@@ -61,11 +59,11 @@ def create_barcode_poster():
         right = (width, counter)
         draw.line([left, right], fill=color)
     del draw
-    img.save(MOVIE_TITLE + "_barcode.png")
+    img.save(file_name + "_barcode.png")
     print("Successfully rendered barcode_poster")
 
 
-def create_wave_poster():
+def create_wave_poster(file_name):
     # creates png with pixel height equal to the analysed frames, width is 2/3 of height (standard poster format)
     # draws a line each loop whose width depends on relative brightness of frame to create wave effect
 
@@ -74,17 +72,17 @@ def create_wave_poster():
     # how much the length between the actual and last line should differ, linear
     LINE_VARIATION = 40
 
-    with open(MOVIE_TITLE) as file:
+    with open(file_name) as file:
         lines = file.readlines()
         color_list = [tuple(map(int, i.split(','))) for i in lines[:-1]]
 
-    height = int(file_len(MOVIE_TITLE) * 1.2)
+    height = int(file_len(file_name) * 1.2)
     width = int(height / (1 + 7/9))
     mid = int(width / 2)
     min_line_width = int(width / 20)
     img = Image.new('RGB', (width, height), color="black")
 
-    counter = int(file_len(MOVIE_TITLE) * 0.1)
+    counter = int(file_len(file_name) * 0.1)
     draw = ImageDraw.Draw(img)
     brightness = get_color_brightness(color_list[0])
     # brightness = value between 0&1, by converting color to grayscale
@@ -109,11 +107,11 @@ def create_wave_poster():
 
         counter += 1
     del draw
-    img.save(MOVIE_TITLE + "_wave.png")
+    img.save(file_name + "_wave.png")
     print("Successfully rendered wave_poster")
 
 
-def create_average_poster():
+def create_average_poster(file_name):
     # averages a number of frame then draws a polygon for each color, length depending on previous and following brightness
 
     # sets number of frames to average colors together
@@ -121,12 +119,12 @@ def create_average_poster():
     # how much the brightness affects the length of a line, exponential
     BRIGHTNESS_COEFF = 0.3
 
-    with open(MOVIE_TITLE) as file:
+    with open(file_name) as file:
         lines = file.readlines()
         color_list = [tuple(map(int, i.split(',')))
                       for i in lines[:-1]]
 
-    height = int(file_len(MOVIE_TITLE) * 1.2)
+    height = int(file_len(file_name) * 1.2)
     width = int(height / (1.5))
     mid = int(width / 2)
     min_line_width = int(width / 20)
@@ -146,7 +144,7 @@ def create_average_poster():
             tuplecolor = tuple(map(sum, zip((0, 0, 0), color_list[x])))
             count_colors = 0
 
-    counter = int(file_len(MOVIE_TITLE) * 0.1)
+    counter = int(file_len(file_name) * 0.1)
     draw = ImageDraw.Draw(img)
     brightness = get_color_brightness(reduced_colors[0])
     # brightness = value between 0&1, by converting color to grayscale
@@ -170,7 +168,7 @@ def create_average_poster():
 
         counter += NUM_FRAMES_GROUPED
     del draw
-    img.save(MOVIE_TITLE + "_average.png")
+    img.save(file_name + "_average.png")
     print("Succesfully rendered average_poster")
 
 
@@ -199,12 +197,12 @@ def progressbar(iterator, pre="", size=60, file=sys.stdout):
 
 if __name__ == "__main__":
     video_path = askopenfilename()
-    MOVIE_TITLE = os.path.basename(video_path).split('.')[0]
+    file_name = os.path.basename(video_path).split('.')[0]
     try:
-        if not(os.path.isfile(sys.path[0]+"/"+MOVIE_TITLE)):
-            analyse_frames(video_path)
+        if not(os.path.isfile(sys.path[0]+"/"+file_name)):
+            analyse_frames(video_path, file_name)
     except Exception as e:
         print(e)
-    create_average_poster()
-    create_wave_poster()
-    create_barcode_poster()
+    create_average_poster(file_name)
+    create_wave_poster(file_name)
+    create_barcode_poster(file_name)
