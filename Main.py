@@ -3,7 +3,6 @@
 import sys
 import os
 import cv2
-import random
 import numpy as np
 import regex as re
 from tqdm import tqdm
