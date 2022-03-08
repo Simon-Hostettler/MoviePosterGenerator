@@ -11,9 +11,11 @@ from PIL import Image, ImageDraw
 def analyse_frames(movie_path, file_name):
     # Opens video in cv2, gets frames each second, calculates average color of frame and writes it into file
     # how many frames to look at per second
-    FRAME_PER_SEC = 1
+    FRAME_PER_SEC = 0.2
 
     with open(file_name, "w") as file:
+        avg_colors = []
+
         video = cv2.VideoCapture(movie_path)
         total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
         fps = int(video.get(cv2.CAP_PROP_FPS))
@@ -25,12 +27,16 @@ def analyse_frames(movie_path, file_name):
                 video.grab()
             _, frame = video.retrieve()
 
-            # this code gets the average framecolor in BGR, replaces whitespaces with commas,
-            # splits the three colors, inverses them to RGB and then joins them again with commas
             if frame is not None:
-                color = ",".join(reversed((re.sub("\s+", ",", str(frame.mean(axis=(0, 1), dtype=int))[
-                    1:-1].strip())).split(",")))
-                file.write(color + "\n")
+                # average frame using numpy mean, convert it to string
+                avg_color_bgr = str(frame.mean(axis=(0, 1), dtype=int))[
+                    1:-1].strip()
+                # convert from bgr to rgb, substitute whitespace with ','
+                avg_color_rgb = ",".join(
+                    reversed((re.sub("\s+", ",", avg_color_bgr)).split(",")))
+                avg_colors.append(avg_color_rgb)
+
+        file.write("\n".join(avg_colors))
 
 
 def file_len(file_name):
