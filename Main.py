@@ -5,6 +5,7 @@ import os
 import cv2
 import numpy as np
 import regex as re
+import time
 from tqdm import tqdm
 from tkinter.filedialog import askopenfilename
 from PIL import Image, ImageDraw
@@ -31,25 +32,19 @@ def analyse_frames(movie_path, file_name, randomized_selection=True):
 
         if frame is not None:
             if randomized_selection:
-                avg_color_bgr = str(sample_avg_color(frame))[
-                    1:-1].strip()
-                avg_color_rgb = ",".join(
-                    reversed((re.sub("\s+", ",", avg_color_bgr)).split(",")))
-                avg_colors.append(avg_color_rgb)
+                avg_color = sample_avg_color(frame)
             else:
-                # average frame using numpy mean, convert it to string
-                avg_color_bgr = str(frame.mean(axis=(0, 1), dtype=int))[
-                    1:-1].strip()
-                # convert from bgr to rgb, substitute whitespace with ','
-                avg_color_rgb = ",".join(
-                    reversed((re.sub("\s+", ",", avg_color_bgr)).split(",")))
-                avg_colors.append(avg_color_rgb)
+                avg_color = full_avg_color(frame)
+
+            avg_colors.append(",".join(map(str, avg_color)))
 
     with open(file_name, "w") as file:
         file.write("\n".join(avg_colors))
 
 
-def sample_avg_color(frame):
+def sample_avg_color(frame, sample_rate=0.01):
+    ''' computes average rgb color of sample_rate randomly chosen pixels from frame '''
+
     total_size = frame.shape[0]*frame.shape[1]
     num_samples = int(0.01*total_size)
     frame = np.reshape(frame, (total_size, 3))
@@ -57,11 +52,20 @@ def sample_avg_color(frame):
     rand_vec = np.random.randint(
         low=0, high=total_size, size=num_samples, dtype=int)
 
-    return frame[rand_vec].mean(axis=0, dtype=int)
+    avg_color = frame[rand_vec].mean(axis=0, dtype=int)
+    return list(reversed(avg_color.tolist()))
+
+
+def full_avg_color(frame):
+    ''' computes average rgb color of frame '''
+
+    avg_color = frame.mean(axis=(0, 1), dtype=int)
+    return list(reversed(avg_color.tolist()))
 
 
 def file_len(file_name):
-    '''returns line number of file'''
+    ''' returns line number of file '''
+
     return sum(1 for line in open(file_name))
 
 
