@@ -4,8 +4,6 @@ import sys
 import os
 import cv2
 import numpy as np
-import regex as re
-import time
 from tqdm import tqdm
 from tkinter.filedialog import askopenfilename
 from PIL import Image, ImageDraw
@@ -46,7 +44,7 @@ def sample_avg_color(frame, sample_rate=0.01):
     ''' computes average rgb color of sample_rate randomly chosen pixels from frame '''
 
     total_size = frame.shape[0]*frame.shape[1]
-    num_samples = int(0.01*total_size)
+    num_samples = int(sample_rate*total_size)
     frame = np.reshape(frame, (total_size, 3))
 
     rand_vec = np.random.randint(
