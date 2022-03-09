@@ -110,7 +110,7 @@ def create_wave_poster(file_name):
     width = int(height / (1 + 7/9))
     mid = int(width / 2)
     min_line_width = int(width / 20)
-    img = Image.new('RGB', (width, height), color="black")
+    img = Image.new('RGB', (width, height), color=(26, 28, 33, 0))
 
     counter = int(file_len(file_name) * 0.1)
     draw = ImageDraw.Draw(img)
