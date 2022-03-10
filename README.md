@@ -11,6 +11,11 @@ To install necessary packages run:
 ```
 pip3 install -r requirements.txt
 ```
+Can either be used with GUI or CLI arguments, example:
+
+```
+python3 movie_poster_generator.py --gui='false' --video_path='movie.mkv' --randomized_selection='false'
+```
 
 Examples from the movie "The End of Evangelion":
 
