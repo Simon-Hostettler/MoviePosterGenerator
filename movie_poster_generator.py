@@ -210,7 +210,7 @@ def create_average_poster(file_name):
         counter += NUM_FRAMES_GROUPED
     del draw
     img.save("Images/" + file_name.split('/')[1] + "_average.png")
-    print("Succesfully rendered average_poster")
+    print("Successfully rendered average_poster")
 
 
 def resize_image(file, max_length):
