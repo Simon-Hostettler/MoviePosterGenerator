@@ -1,15 +1,27 @@
 # Script which gets average color of frames from video file, then converts it into different posters
 
+from random import sample
 import sys
 import os
 import cv2
+import argparse
 import numpy as np
 from tqdm import tqdm
+from distutils.util import strtobool
 from tkinter.filedialog import askopenfilename
 from PIL import Image, ImageDraw
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--gui', default=True,
+                    help='whether to use gui to select file or use args')
+parser.add_argument('--video_path', type=str, help='file to be read')
+parser.add_argument('--randomized_selection', default=True,
+                    help='whether to process entire frames (slow) or randomly sample colors (quick)')
+parser.add_argument('--sample_rate', type=float, default=0.01,
+                    help='percentage of pixels to be randomly sampled')
 
-def analyse_frames(movie_path, file_name, randomized_selection=True):
+
+def analyse_frames(movie_path, file_name, randomized_selection=True, sample_rate=0.01):
     '''Opens movie_path in cv2, gets frames each second, calculates average color of frame and writes it into file_name'''
 
     # how many frames to look at per second
@@ -30,7 +42,7 @@ def analyse_frames(movie_path, file_name, randomized_selection=True):
 
         if frame is not None:
             if randomized_selection:
-                avg_color = sample_avg_color(frame)
+                avg_color = sample_avg_color(frame, sample_rate)
             else:
                 avg_color = full_avg_color(frame)
 
@@ -207,20 +219,35 @@ def resize_image(file, max_length):
     img.save(file)
 
 
+def str_to_bool(s):
+    if isinstance(s, bool):
+        return s
+    return strtobool(s)
+
+
 if __name__ == "__main__":
+    args = vars(parser.parse_args())
+
     if not os.path.exists(sys.path[0]+"/Images/"):
         os.makedirs(sys.path[0]+"/Images/")
     if not os.path.exists(sys.path[0]+"/ColorFiles/"):
         os.makedirs(sys.path[0]+"/ColorFiles/")
 
-    video_path = askopenfilename()
-    file_name = "ColorFiles/" + os.path.basename(video_path).split('.')[0]
+    if str_to_bool(args['gui']):
+        video_path = askopenfilename()
+        file_name = "ColorFiles/" + os.path.basename(video_path).split('.')[0]
+        rand_sel = True
+        sample_rate = 0.01
+    else:
+        video_path = args['video_path']
+        file_name = "ColorFiles/" + os.path.basename(video_path).split('.')[0]
+        rand_sel = str_to_bool(args['randomized_selection'])
+        sample_rate = args['sample_rate']
 
-    try:
-        if not(os.path.isfile(sys.path[0]+"/"+file_name)):
-            analyse_frames(video_path, file_name, randomized_selection=True)
-    except Exception as e:
-        print(e)
+    if not(os.path.isfile(sys.path[0]+"/ColorFiles/"+file_name)):
+        analyse_frames(video_path, file_name,
+                       randomized_selection=rand_sel, sample_rate=sample_rate)
+
     create_average_poster(file_name)
     create_wave_poster(file_name)
     create_barcode_poster(file_name)
