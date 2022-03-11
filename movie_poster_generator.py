@@ -19,6 +19,8 @@ parser.add_argument('--randomized_selection', default=True,
                     help='whether to process entire frames (slow) or randomly sample colors (quick)')
 parser.add_argument('--sample_rate', type=float, default=0.01,
                     help='percentage of pixels to be randomly sampled')
+parser.add_argument('--rotation', type=float, default=0.0,
+                    help='degree to which the poster is rotated, 90 = wallpaper orientation')
 
 
 def analyse_frames(movie_path, file_name, randomized_selection=True, sample_rate=0.01):
@@ -84,7 +86,7 @@ def get_color_brightness(c):
     return ((c[0] * 0.2989) + (c[1] * 0.5870) + (c[2] * 0.114))/255
 
 
-def create_barcode_poster(file_name):
+def create_barcode_poster(file_name, rotation):
     '''creates png with pixel height equal to the analysed frames, width is 2/3 of height (standard poster format).
     Then draws a horizontal line with color of every frame'''
 
@@ -101,11 +103,13 @@ def create_barcode_poster(file_name):
         right = (width, counter)
         draw.line([left, right], fill=color)
     del draw
+
+    out = img.rotate(rotation, expand=1)
     img.save("Images/" + file_name.split('/')[1] + "_barcode.png")
     print("Successfully rendered barcode_poster")
 
 
-def create_wave_poster(file_name):
+def create_wave_poster(file_name, rotation):
     '''creates png with pixel height equal to the analysed frames, width is 2/3 of height (standard poster format)
     Then draws a line each loop whose width depends on relative brightness of frame to create wave effect'''
 
@@ -149,11 +153,13 @@ def create_wave_poster(file_name):
 
         counter += 1
     del draw
-    img.save("Images/" + file_name.split('/')[1] + "_wave.png")
+
+    out = img.rotate(rotation, expand=1)
+    out.save("Images/" + file_name.split('/')[1] + "_wave.png")
     print("Successfully rendered wave_poster")
 
 
-def create_average_poster(file_name):
+def create_average_poster(file_name, rotation):
     '''averages a number of frame then draws a polygon for each color, length depending on previous and following brightness'''
     # sets number of frames to average colors together
     NUM_FRAMES_GROUPED = 30
@@ -209,7 +215,9 @@ def create_average_poster(file_name):
 
         counter += NUM_FRAMES_GROUPED
     del draw
-    img.save("Images/" + file_name.split('/')[1] + "_average.png")
+
+    out = img.rotate(rotation, expand=1)
+    out.save("Images/" + file_name.split('/')[1] + "_average.png")
     print("Successfully rendered average_poster")
 
 
@@ -238,16 +246,18 @@ if __name__ == "__main__":
         file_name = "ColorFiles/" + os.path.basename(video_path).split('.')[0]
         rand_sel = True
         sample_rate = 0.01
+        rot = 90
     else:
         video_path = args['video_path']
         file_name = "ColorFiles/" + os.path.basename(video_path).split('.')[0]
         rand_sel = str_to_bool(args['randomized_selection'])
         sample_rate = args['sample_rate']
+        rot = args['rotation']
 
     if not(os.path.isfile(sys.path[0]+"/ColorFiles/"+file_name)):
         analyse_frames(video_path, file_name,
                        randomized_selection=rand_sel, sample_rate=sample_rate)
 
-    create_average_poster(file_name)
-    create_wave_poster(file_name)
-    create_barcode_poster(file_name)
+    create_average_poster(file_name, rot)
+    create_wave_poster(file_name, rot)
+    create_barcode_poster(file_name, rot)
