@@ -6,6 +6,10 @@ This data can then be processed in the three functions create_line_poster, creat
 
 The runtime of the analyse_frames() function is in O(number_of_frames\*frame_height\*frame_width), so try to use low-res movies for faster results.
 
+This project was inspired by [TCOM](https://www.thecolorsofmotion.com/)
+
+# Usage
+
 To install necessary packages run:
 
 ```
@@ -16,6 +20,7 @@ Can either be used with GUI or CLI arguments, example:
 ```
 python3 movie_poster_generator.py --gui='false' --video_path='movie.mkv' --randomized_selection='false'
 ```
+# Examples
 
 Examples from the movie "The End of Evangelion":
 
